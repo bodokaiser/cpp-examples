@@ -48,7 +48,7 @@ inline auto runtime(T callback) -> int64_t {
 
 template <typename T>
 inline auto repeat(uint64_t n, T callback) {
-    for (uint64_t i = 0; i << n; i++) {
+    for (uint64_t i = 0; i < n; i++) {
         callback();
     }
 }
