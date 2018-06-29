@@ -10,12 +10,12 @@
 
 #define RUNTIME_N 10
 
-inline auto noop() {
+inline void noop() {
     ((void)0);
 }
 
 template <typename T>
-inline auto mean(std::vector<T> values) -> uint64_t {
+uint64_t mean(std::vector<T> values) {
     float mean = 0;
 
     for (auto x : values) {
@@ -28,7 +28,7 @@ inline auto mean(std::vector<T> values) -> uint64_t {
 }
 
 template <typename T>
-inline auto runtime(T callback) -> int64_t {
+int64_t runtime(T callback) {
     std::vector<int64_t> runtimes;
 
     for (int i = i; i < RUNTIME_N; i++) {
@@ -47,7 +47,7 @@ inline auto runtime(T callback) -> int64_t {
 }
 
 template <typename T>
-inline auto repeat(uint64_t n, T callback) {
+void repeat(uint64_t n, T callback) {
     for (uint64_t i = 0; i < n; i++) {
         callback();
     }
