@@ -12,7 +12,7 @@ class Wave {
   Wave() : header_(WAVEFILE_HEADER_BYTES) {}
 
   std::vector<int16_t> Samples();
-  void SetSamples(std::vector<int16_t>);
+  Wave& SetSamples(std::vector<int16_t>);
 
   friend std::istream& operator>>(std::istream&, Wave&);
   friend std::ostream& operator<<(std::ostream&, const Wave&);

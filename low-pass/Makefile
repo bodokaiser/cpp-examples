@@ -5,7 +5,7 @@ LDFLAGS := -lfftw3 -L/usr/local/opt/fftw/lib -I/usr/local/opt/fftw/include
 SOURCES := $(shell find src -name '*.cc')
 OBJECTS :=  $(SOURCES:%.cc=%.o)
 
-build: $(OBJECTS)
+lowpass: $(OBJECTS)
 	$(CC) $(CCFLAGS) $(LDFLAGS) $(notdir $^) -o $@
 	@rm *.o
 

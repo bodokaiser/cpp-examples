@@ -6,8 +6,10 @@ std::vector<int16_t> Wave::Samples() {
     return samples_;
 }
 
-void Wave::SetSamples(std::vector<int16_t> samples) {
+Wave& Wave::SetSamples(std::vector<int16_t> samples) {
   samples_ = samples;
+
+  return *this;
 }
 
 std::istream& operator>>(std::istream& stream, Wave& wave) {

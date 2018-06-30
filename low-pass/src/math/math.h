@@ -13,7 +13,7 @@ std::vector<std::complex<double>> inverse_fft(
     std::vector<std::complex<double>>);
 
 template <typename T>
-std::vector<std::complex<double>> to_complex(std::vector<T> real) {
+std::vector<std::complex<double>> complex(std::vector<T> real) {
   std::vector<std::complex<double>> complex(real.size());
   std::transform(real.begin(), real.end(), complex.begin(),
       [](T x) { return std::complex<double>(x, 0); });
@@ -21,7 +21,14 @@ std::vector<std::complex<double>> to_complex(std::vector<T> real) {
   return complex;
 }
 
-std::vector<int16_t> to_real(std::vector<std::complex<double>>);
+template <typename T>
+std::vector<T> real(std::vector<std::complex<double>> complex) {
+  std::vector<T> real(complex.size());
+  std::transform(complex.begin(), complex.end(), real.begin(),
+      [](std::complex<double> x) { return static_cast<T>(x.real()); });
+
+  return real;
+}
 
 }
 

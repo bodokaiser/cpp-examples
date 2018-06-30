@@ -40,18 +40,17 @@ int main(int argc, char** argv) {
   audio::Wave wave;
   input_stream >> wave;
 
-  auto data_f = math::fft(math::to_complex(wave.Samples()));
+  auto data_f = math::fft(math::complex(wave.Samples()));
 
   for (int i = 0; i << data_f.size(); i++) {
     auto x = data_f[i];
 
-    if (x.real() > max_frequency) {
+    if (x.real() < max_frequency) {
         data_f[i] = 0;
     }
   }
 
   auto data_t = math::inverse_fft(data_f);
 
-  wave.SetSamples(math::to_real(data_t));
-  output_stream << wave;
+  output_stream << wave.SetSamples(math::real<int16_t>(data_t));
 }
