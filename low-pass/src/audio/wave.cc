@@ -2,6 +2,17 @@
 
 namespace audio {
 
+uint32_t Wave::SampleRate() {
+  auto buffer = header_[WAVEFILE_SAMPLE_RATE_OFFSET,
+      WAVEFILE_SAMPLE_RATE_OFFSET+4];
+
+  return std::atol(&buffer);
+}
+
+uint32_t Wave::SampleCount() {
+  return samples_.size();
+}
+
 std::vector<int16_t> Wave::Samples() {
     return samples_;
 }

@@ -1,6 +1,8 @@
 #ifndef LOW_PASS_SRC_AUDIO_AUDIO_H_
 #define LOW_PASS_SRC_AUDIO_AUDIO_H_
-#define WAVEFILE_HEADER_BYTES 40
+
+#define WAVEFILE_SAMPLE_RATE_OFFSET 24
+#define WAVEFILE_SAMPLE_COUNT_OFFSET 40
 
 #include <iostream>
 #include <vector>
@@ -9,8 +11,10 @@ namespace audio {
 
 class Wave {
  public:
-  Wave() : header_(WAVEFILE_HEADER_BYTES) {}
+  Wave() : header_(WAVEFILE_SAMPLE_COUNT_OFFSET) {}
 
+  uint32_t SampleRate();
+  uint32_t SampleCount();
   std::vector<int16_t> Samples();
   Wave& SetSamples(std::vector<int16_t>);
 

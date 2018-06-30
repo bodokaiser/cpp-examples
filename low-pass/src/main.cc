@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::string input_path(argv[1]);
-  std::string output_path(argv[3]);
+  std::string output_path(argv[2]);
 
   std::ifstream input_stream(input_path, std::ios::in | std::ios::binary);
   if (!input_stream.good()) {
@@ -28,29 +28,20 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  double max_frequency;
-  try {
-    max_frequency = std::stod(argv[2]);
-  } catch(...) {
-    std::cerr << "could not parse frequency " << argv[2] << std::endl;
-
-    return 1;
-  }
-
   audio::Wave wave;
   input_stream >> wave;
 
-  auto data_f = math::fft(math::complex(wave.Samples()));
+  auto sample_count = wave.SampleCount();
+  auto sample_rate = wave.SampleRate();
+  auto delta_frequency = 1. * sample_rate / sample_count;
 
-  for (int i = 0; i << data_f.size(); i++) {
-    auto x = data_f[i];
+  auto spectrum = math::fft(math::complex(wave.Samples()));
 
-    if (x.real() < max_frequency) {
-        data_f[i] = 0;
-    }
+  for (size_t i = 25000; i < spectrum.size(); ++i) {
+    spectrum[i] = 0;
   }
 
-  auto data_t = math::inverse_fft(data_f);
+  auto audio = math::inverse_fft(spectrum);
 
-  output_stream << wave.SetSamples(math::real<int16_t>(data_t));
+  output_stream << wave.SetSamples(math::real<int16_t>(audio));
 }
