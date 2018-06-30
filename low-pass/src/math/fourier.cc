@@ -4,8 +4,7 @@
 
 namespace math {
 
-std::vector<std::complex<double>>
-fft(std::vector<std::complex<double>> in) {
+std::vector<std::complex<double>> fft(std::vector<std::complex<double>> in) {
   std::vector<std::complex<double>> out(in.size());
 
   fftw_plan plan = fftw_plan_dft_1d(in.size(),
@@ -19,8 +18,8 @@ fft(std::vector<std::complex<double>> in) {
   return out;
 }
 
-std::vector<std::complex<double>>
-inverse_fft(std::vector<std::complex<double>> in) {
+std::vector<std::complex<double>> inverse_fft(
+    std::vector<std::complex<double>> in) {
   std::vector<std::complex<double>> out(in.size());
 
   fftw_plan plan = fftw_plan_dft_1d(in.size(),
