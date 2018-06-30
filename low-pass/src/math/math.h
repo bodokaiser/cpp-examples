@@ -7,24 +7,21 @@
 
 namespace math {
 
-std::vector<std::complex<double>>
-fft(std::vector<std::complex<double>>);
+std::vector<std::complex<double>> fft(std::vector<std::complex<double>>);
 
-std::vector<std::complex<double>>
-inverse_fft(std::vector<std::complex<double>>);
+std::vector<std::complex<double>> inverse_fft(
+    std::vector<std::complex<double>>);
 
 template <typename T>
-std::vector<std::complex<double>>
-to_complex(std::vector<T> real) {
-    std::vector<std::complex<double>> complex(real.size());
-    std::transform(real.begin(), real.end(), complex.begin(),
-        [](T x) { return std::complex<double>(x, 0); });
+std::vector<std::complex<double>> to_complex(std::vector<T> real) {
+  std::vector<std::complex<double>> complex(real.size());
+  std::transform(real.begin(), real.end(), complex.begin(),
+      [](T x) { return std::complex<double>(x, 0); });
 
-    return complex;
+  return complex;
 }
 
-std::vector<int16_t>
-to_real(std::vector<std::complex<double>>);
+std::vector<int16_t> to_real(std::vector<std::complex<double>>);
 
 }
 

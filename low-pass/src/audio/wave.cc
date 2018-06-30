@@ -2,28 +2,38 @@
 
 namespace audio {
 
-std::vector<int16_t> read_wave(std::istream& istream) {
-    uint32_t size;
-
-    istream.ignore(40);
-    istream.read(reinterpret_cast<char*>(&size), sizeof(size));
-
-    std::vector<int16_t> samples(size);
-
-    istream.read(reinterpret_cast<char*>(samples.data()), size);
-
-    return samples;
+std::vector<int16_t> Wave::Samples() {
+    return samples_;
 }
 
-void write_wave(std::ostream& ostream, std::vector<int16_t> samples) {
-    ostream.write(reinterpret_cast<char*>(samples.size()),
-        sizeof(samples.size()));
+void Wave::SetSamples(std::vector<int16_t> samples) {
+  samples_ = samples;
+}
 
-    for (int i = 0; i < 40; i++) {
-        ostream.put(0);
-    }
+std::istream& operator>>(std::istream& stream, Wave& wave) {
+  uint32_t size;
 
-    ostream.write(reinterpret_cast<char*>(samples.data()), samples.size());
+  stream.read(wave.header_.data(), wave.header_.size());
+  stream.read(reinterpret_cast<char*>(&size), sizeof(size));
+
+  wave.samples_.resize(size);
+
+  stream.read(reinterpret_cast<char*>(wave.samples_.data()),
+      size * sizeof(int16_t));
+
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const Wave& wave) {
+  uint32_t size(wave.samples_.size());
+
+  stream.write(wave.header_.data(), wave.header_.size());
+  stream.write(reinterpret_cast<const char*>(&size), sizeof(size));
+
+  stream.write(reinterpret_cast<const char*>(wave.samples_.data()),
+      size * sizeof(int16_t));
+
+  return stream;
 }
 
 }
