@@ -65,7 +65,7 @@ class Matrix {
     return *this;
   }
 
-  T& operator()(size_t i, size_t j) {
+  T& at(size_t i, size_t j) {
     if (i >= rows_ || j >= cols_) {
       throw std::out_of_range("index out of range");
     }
@@ -73,7 +73,7 @@ class Matrix {
     return data_[i * rows_ + j];
   }
 
-  T operator()(size_t i, size_t j) const {
+  T at(size_t i, size_t j) const {
     if (i >= rows_ || j >= cols_) {
       throw std::out_of_range("index out of range");
     }
