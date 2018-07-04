@@ -1,10 +1,10 @@
-CC := /usr/local/opt/llvm/bin/clang++
-CCFLAGS := -std=c++17
+CXX := /usr/local/opt/llvm/bin/clang++
+CXXFLAGS := -std=c++17
 
 build: main.o
 
-%.o: %.cc
-	$(CC) $(CCFLAGS) $< -o $@
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
 
 clean:
 	rm *.o
