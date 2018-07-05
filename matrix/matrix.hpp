@@ -11,7 +11,9 @@ namespace linalg {
 
 using dim_t = std::pair<size_t, size_t>;
 
-template <typename T>
+enum class Allocator { vector, raw_pointer, unique_pointer };
+
+template <Allocator A, typename T>
 class Matrix {
  public:
   Matrix() : Matrix(0, 0){};
@@ -27,7 +29,7 @@ class Matrix {
   void fill(T value);
 
   Matrix& operator=(const Matrix& matrix) {
-    Matrix<T> tmp(matrix);
+    Matrix<A, T> tmp(matrix);
 
     *this = std::move(tmp);
 
@@ -62,7 +64,7 @@ class Matrix {
   }
 
   friend std::ostream& operator<<(std::ostream& stream,
-                                  const Matrix<T>& matrix) {
+                                  const Matrix<A, T>& matrix) {
     for (size_t i = 0; i < matrix.cols(); i++) {
       for (size_t j = 0; j < matrix.rows(); j++) {
         T element = matrix.data_[i * matrix.rows() + j];
@@ -83,28 +85,28 @@ class Matrix {
   std::unique_ptr<T[]> data_;
 };
 
-template <typename T>
-dim_t Matrix<T>::dim() const {
+template <Allocator A, typename T>
+dim_t Matrix<A, T>::dim() const {
   return dim_;
-};
+}
 
-template <typename T>
-size_t Matrix<T>::size() const {
+template <Allocator A, typename T>
+size_t Matrix<A, T>::size() const {
   return rows() * cols();
 }
 
-template <typename T>
-size_t Matrix<T>::rows() const {
+template <Allocator A, typename T>
+size_t Matrix<A, T>::rows() const {
   return dim().first;
 }
 
-template <typename T>
-size_t Matrix<T>::cols() const {
+template <Allocator A, typename T>
+size_t Matrix<A, T>::cols() const {
   return dim().second;
 }
 
-template <typename T>
-void Matrix<T>::fill(T value) {
+template <Allocator A, typename T>
+void Matrix<A, T>::fill(T value) {
   for (size_t i = 0; i < cols(); i++) {
     for (size_t j = 0; j < rows(); j++) {
       at(i, j) = value;
@@ -112,20 +114,21 @@ void Matrix<T>::fill(T value) {
   }
 }
 
-template <typename T>
-Matrix<T>::Matrix(const Matrix& matrix) : Matrix(matrix.rows(), matrix.cols()) {
+template <Allocator A, typename T>
+Matrix<A, T>::Matrix(const Matrix<A, T>& matrix)
+    : Matrix(matrix.rows(), matrix.cols()) {
   std::copy(matrix.data_.get(), matrix.data_.get() + size(), data_.get());
 }
 
-template <typename T>
-Matrix<T>::Matrix(Matrix&& matrix) noexcept
+template <Allocator A, typename T>
+Matrix<A, T>::Matrix(Matrix<A, T>&& matrix) noexcept
     : dim_(matrix.dim_), data_(std::move(matrix.data_)) {
   matrix.dim_ = dim_t(0, 0);
   matrix.data_ = nullptr;
 }
 
-template <typename T>
-Matrix<T>::Matrix(size_t m, size_t n) noexcept : dim_(m, n) {
+template <Allocator A, typename T>
+Matrix<A, T>::Matrix(size_t m, size_t n) noexcept : dim_(m, n) {
   data_ = std::make_unique<T[]>(m * n);
 
   fill(0);
