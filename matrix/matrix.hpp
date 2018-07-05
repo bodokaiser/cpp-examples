@@ -3,9 +3,11 @@
 #include <cmath>
 #include <iomanip>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace linalg {
 
@@ -13,14 +15,11 @@ using dim_t = std::pair<size_t, size_t>;
 
 enum class Allocator { vector, raw_pointer, unique_pointer };
 
-template <Allocator A, typename T>
-class Matrix {
+template <typename T>
+class MatrixBase {
  public:
-  Matrix() : Matrix(0, 0){};
-  Matrix(const Matrix& matrix);
-  Matrix(Matrix&& matrix) noexcept;
-  Matrix(size_t m, size_t n) noexcept;
-  ~Matrix() = default;
+  MatrixBase() : MatrixBase(0, 0){};
+  MatrixBase(size_t m, size_t n) : dim_(m, n){};
 
   dim_t dim() const;
   size_t size() const;
@@ -28,48 +27,15 @@ class Matrix {
   size_t rows() const;
   void fill(T value);
 
-  Matrix& operator=(const Matrix& matrix) {
-    Matrix<A, T> tmp(matrix);
-
-    *this = std::move(tmp);
-
-    return *this;
-  }
-
-  Matrix& operator=(Matrix&& matrix) noexcept {
-    if (this == &matrix) {
-      return *this;
-    }
-    data_ = std::move(matrix.data_);
-    dim_ = matrix.dim_;
-    matrix.dim_ = dim_t(0, 0);
-
-    return *this;
-  }
-
-  T& at(size_t i, size_t j) {
-    if (i >= rows() || j >= cols()) {
-      throw std::out_of_range("index out of range");
-    }
-
-    return data_[i * rows() + j];
-  }
-
-  T at(size_t i, size_t j) const {
-    if (i >= rows() || j >= cols()) {
-      throw std::out_of_range("index out of range");
-    }
-
-    return data_[i * rows() + j];
-  }
+  virtual T& at(size_t i, size_t j) = 0;
+  virtual T at(size_t i, size_t j) const = 0;
 
   friend std::ostream& operator<<(std::ostream& stream,
-                                  const Matrix<A, T>& matrix) {
+                                  const MatrixBase<T>& matrix) {
     for (size_t i = 0; i < matrix.cols(); i++) {
       for (size_t j = 0; j < matrix.rows(); j++) {
-        T element = matrix.data_[i * matrix.rows() + j];
-
-        stream << std::left << std::setw(4) << std::setfill(' ') << element;
+        stream << std::left << std::setw(4) << std::setfill(' ')
+               << matrix.at(i, j);
       }
 
       if (i != matrix.cols() - 1) {
@@ -80,33 +46,34 @@ class Matrix {
     return stream;
   }
 
- private:
+ protected:
   dim_t dim_;
-  std::unique_ptr<T[]> data_;
+
+  void assert_indices(size_t i, size_t j) const;
 };
 
-template <Allocator A, typename T>
-dim_t Matrix<A, T>::dim() const {
+template <typename T>
+dim_t MatrixBase<T>::dim() const {
   return dim_;
 }
 
-template <Allocator A, typename T>
-size_t Matrix<A, T>::size() const {
+template <typename T>
+size_t MatrixBase<T>::size() const {
   return rows() * cols();
 }
 
-template <Allocator A, typename T>
-size_t Matrix<A, T>::rows() const {
+template <typename T>
+size_t MatrixBase<T>::rows() const {
   return dim().first;
 }
 
-template <Allocator A, typename T>
-size_t Matrix<A, T>::cols() const {
+template <typename T>
+size_t MatrixBase<T>::cols() const {
   return dim().second;
 }
 
-template <Allocator A, typename T>
-void Matrix<A, T>::fill(T value) {
+template <typename T>
+void MatrixBase<T>::fill(T value) {
   for (size_t i = 0; i < cols(); i++) {
     for (size_t j = 0; j < rows(); j++) {
       at(i, j) = value;
@@ -114,24 +81,201 @@ void Matrix<A, T>::fill(T value) {
   }
 }
 
-template <Allocator A, typename T>
-Matrix<A, T>::Matrix(const Matrix<A, T>& matrix)
-    : Matrix(matrix.rows(), matrix.cols()) {
-  std::copy(matrix.data_.get(), matrix.data_.get() + size(), data_.get());
+template <typename T>
+void MatrixBase<T>::assert_indices(size_t i, size_t j) const {
+  if (i >= rows() || j >= cols()) {
+    throw std::out_of_range("index out of range");
+  }
 }
 
 template <Allocator A, typename T>
-Matrix<A, T>::Matrix(Matrix<A, T>&& matrix) noexcept
-    : dim_(matrix.dim_), data_(std::move(matrix.data_)) {
+class Matrix : public MatrixBase<T> {};
+
+template <typename T>
+class Matrix<Allocator::vector, T> : public MatrixBase<T> {
+ public:
+  Matrix(size_t n, size_t m);
+
+  T& at(size_t i, size_t j);
+  T at(size_t i, size_t j) const;
+
+ private:
+  std::vector<T> data_;
+};
+
+template <typename T>
+Matrix<Allocator::vector, T>::Matrix(size_t n, size_t m) : MatrixBase<T>(n, m) {
+  data_.resize(this->size());
+}
+
+template <typename T>
+T& Matrix<Allocator::vector, T>::at(size_t i, size_t j) {
+  this->assert_indices(i, j);
+
+  return data_[i * this->rows() + j];
+}
+
+template <typename T>
+T Matrix<Allocator::vector, T>::at(size_t i, size_t j) const {
+  this->assert_indices(i, j);
+
+  return data_[i * this->rows() + j];
+}
+
+template <typename T>
+class Matrix<Allocator::raw_pointer, T> : public MatrixBase<T> {
+ public:
+  Matrix() : Matrix(0, 0){};
+  Matrix(const Matrix<Allocator::raw_pointer, T>& matrix);
+  Matrix(Matrix<Allocator::raw_pointer, T>&& matrix) noexcept;
+  Matrix(size_t m, size_t n) noexcept;
+  ~Matrix() noexcept;
+
+  T& at(size_t i, size_t j);
+  T at(size_t i, size_t j) const;
+
+  Matrix<Allocator::raw_pointer, T>& operator=(
+      const Matrix<Allocator::raw_pointer, T>& matrix) {
+    Matrix<Allocator::raw_pointer, T> tmp(matrix);
+
+    *this = std::move(tmp);
+
+    return *this;
+  }
+
+  Matrix<Allocator::raw_pointer, T>& operator=(
+      Matrix<Allocator::raw_pointer, T>&& matrix) noexcept {
+    if (this == &matrix) {
+      return *this;
+    }
+    if (data_ != nullptr) {
+      delete[] data_;
+    }
+    data_ = matrix.data_;
+    this->dim_ = matrix.dim_;
+    matrix.data_ = nullptr;
+    matrix.dim_ = dim_t(0, 0);
+
+    return *this;
+  }
+
+ private:
+  T* data_;
+};
+
+template <typename T>
+Matrix<Allocator::raw_pointer, T>::Matrix(
+    const Matrix<Allocator::raw_pointer, T>& matrix)
+    : Matrix(matrix.rows(), matrix.cols()) {
+  std::copy(matrix.data_, matrix.data_ + this->size(), data_);
+}
+
+template <typename T>
+Matrix<Allocator::raw_pointer, T>::Matrix(
+    Matrix<Allocator::raw_pointer, T>&& matrix) noexcept
+    : MatrixBase<T>(matrix.rows(), matrix.cols()),
+      data_(std::move(matrix.data_)) {
+  matrix.data_ = nullptr;
+  matrix.dim_ = dim_t(0, 0);
+}
+
+template <typename T>
+Matrix<Allocator::raw_pointer, T>::Matrix(size_t m, size_t n) noexcept
+    : MatrixBase<T>(m, n), data_(new T[m * n]) {
+  this->fill(0);
+}
+
+template <typename T>
+Matrix<Allocator::raw_pointer, T>::~Matrix() noexcept {
+  delete[] data_;
+}
+
+template <typename T>
+T& Matrix<Allocator::raw_pointer, T>::at(size_t i, size_t j) {
+  this->assert_indices(i, j);
+
+  return data_[i * this->rows() + j];
+}
+
+template <typename T>
+T Matrix<Allocator::raw_pointer, T>::at(size_t i, size_t j) const {
+  this->assert_indices(i, j);
+
+  return data_[i * this->rows() + j];
+}
+
+template <typename T>
+class Matrix<Allocator::unique_pointer, T> : public MatrixBase<T> {
+ public:
+  Matrix() : Matrix(0, 0){};
+  Matrix(const Matrix<Allocator::unique_pointer, T>& matrix);
+  Matrix(Matrix<Allocator::unique_pointer, T>&& matrix) noexcept;
+  Matrix(size_t m, size_t n) noexcept;
+  ~Matrix() = default;
+
+  T& at(size_t i, size_t j);
+  T at(size_t i, size_t j) const;
+
+  Matrix<Allocator::unique_pointer, T>& operator=(
+      const Matrix<Allocator::unique_pointer, T>& matrix) {
+    Matrix<Allocator::unique_pointer, T> tmp(matrix);
+
+    *this = std::move(tmp);
+
+    return *this;
+  }
+
+  Matrix<Allocator::unique_pointer, T>& operator=(
+      Matrix<Allocator::unique_pointer, T>&& matrix) noexcept {
+    if (this == &matrix) {
+      return *this;
+    }
+    data_ = std::move(matrix.data_);
+    this->dim_ = matrix.dim_;
+    matrix.dim_ = dim_t(0, 0);
+
+    return *this;
+  }
+
+ private:
+  std::unique_ptr<T[]> data_;
+};
+
+template <typename T>
+Matrix<Allocator::unique_pointer, T>::Matrix(
+    const Matrix<Allocator::unique_pointer, T>& matrix)
+    : Matrix(matrix.rows(), matrix.cols()) {
+  std::copy(matrix.data_.get(), matrix.data_.get() + this->size(), data_.get());
+}
+
+template <typename T>
+Matrix<Allocator::unique_pointer, T>::Matrix(
+    Matrix<Allocator::unique_pointer, T>&& matrix) noexcept
+    : Matrix(matrix.rows(), matrix.cols()), data_(std::move(matrix.data_)) {
   matrix.dim_ = dim_t(0, 0);
   matrix.data_ = nullptr;
 }
 
-template <Allocator A, typename T>
-Matrix<A, T>::Matrix(size_t m, size_t n) noexcept : dim_(m, n) {
-  data_ = std::make_unique<T[]>(m * n);
+template <typename T>
+Matrix<Allocator::unique_pointer, T>::Matrix(size_t m, size_t n) noexcept
+    : MatrixBase<T>(m, n) {
+  data_ = std::make_unique<T[]>(this->size());
 
-  fill(0);
+  this->fill(0);
+}
+
+template <typename T>
+T& Matrix<Allocator::unique_pointer, T>::at(size_t i, size_t j) {
+  this->assert_indices(i, j);
+
+  return data_[i * this->rows() + j];
+}
+
+template <typename T>
+T Matrix<Allocator::unique_pointer, T>::at(size_t i, size_t j) const {
+  this->assert_indices(i, j);
+
+  return data_[i * this->rows() + j];
 }
 
 }  // namespace linalg
