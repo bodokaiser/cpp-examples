@@ -1,7 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <ostream>
 #include <sstream>
+#include <string>
 
 namespace math {
 
@@ -35,6 +37,8 @@ class Operation : public Expression, private OperatePolicy {
  public:
   Operation(std::shared_ptr<Expression> lvalue,
             std::shared_ptr<Expression> rvalue);
+
+  std::string str() const final;
 
  private:
   std::shared_ptr<Expression> lvalue_;
