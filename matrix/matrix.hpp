@@ -251,7 +251,8 @@ Matrix<Allocator::unique_pointer, T>::Matrix(
 template <typename T>
 Matrix<Allocator::unique_pointer, T>::Matrix(
     Matrix<Allocator::unique_pointer, T>&& matrix) noexcept
-    : Matrix(matrix.rows(), matrix.cols()), data_(std::move(matrix.data_)) {
+    : data_(std::move(matrix.data_)) {
+  this->dim_ = dim_t(matrix.rows(), matrix.cols());
   matrix.dim_ = dim_t(0, 0);
   matrix.data_ = nullptr;
 }
