@@ -3,19 +3,19 @@
 #include "matrix.hpp"
 
 int main() {
-  Matrix<double> A(2, 2);
+  linalg::Matrix<double> A(2, 2);
   A.at(0, 1) = 1.0;
   A.at(1, 0) = -1.0;
   std::cout << "A: " << std::endl;
   std::cout << A << std::endl;
   std::cout << "A[1,0]: " << A.at(1, 0) << std::endl;
 
-  const Matrix<double> B(std::move(A));
+  const linalg::Matrix<double> B(std::move(A));
   std::cout << "B: " << std::endl;
   std::cout << B << std::endl;
   std::cout << "B[1,0]: " << B.at(1, 0) << std::endl;
 
-  Matrix<double> C;
+  linalg::Matrix<double> C;
   C = B;
   std::cout << "C: " << std::endl;
   std::cout << C << std::endl;
